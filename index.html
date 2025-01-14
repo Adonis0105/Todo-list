@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste de Tâches Interactive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f8ff;
+            color: #333;
+        }
+        h1 {
+            color: #007acc;
+        }
+        #champTache {
+            width: 70%;
+            padding: 10px;
+            margin-right: 10px;
+            border: 2px solid #007acc;
+            border-radius: 5px;
+        }
+        #boutonAjouterTache {
+            padding: 10px 15px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #boutonAjouterTache:hover {
+            background: #005f99;
+        }
+        .tache {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #e6f7ff;
+            border: 1px solid #007acc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tache.terminee {
+            text-decoration: line-through;
+            color: gray;
+            background: #d3d3d3;
+        }
+        .tache button {
+            padding: 5px 10px;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .tache button:hover {
+            background: #cc0000;
+        }
+        .boutons-filtre button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .boutons-filtre button:hover {
+            background: #005f99;
+        }
+        #messageErreur {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body style="padding: 20px;align-items: center;" >
+    <h1>Liste de Tâches</h1>
+    <input type="text" id="champTache" placeholder="Entrez une nouvelle tâche...">
+    <button id="boutonAjouterTache">Ajouter une Tâche</button>
+    <p id="messageErreur" style="display: none;">Veuillez entrer une tâche.</p>
+
+    <div class="boutons-filtre">
+        <button id="afficherToutes">Toutes les Tâches</button>
+        <button id="afficherTerminees">Tâches Terminées</button>
+        <button id="afficherEnAttente">Tâches en Attente</button>
+    </div>
+
+    <ul id="listeTaches"></ul>
+
+    <script>
+        const champTache = document.getElementById('champTache');
+        const boutonAjouterTache = document.getElementById('boutonAjouterTache');
+        const listeTaches = document.getElementById('listeTaches');
+        const messageErreur = document.getElementById('messageErreur');
+
+        const boutonAfficherToutes = document.getElementById('afficherToutes');
+        const boutonAfficherTerminees = document.getElementById('afficherTerminees');
+        const boutonAfficherEnAttente = document.getElementById('afficherEnAttente');
+
+        let taches = JSON.parse(localStorage.getItem('taches')) || [];
+
+        function sauvegarderTaches() {
+            localStorage.setItem('taches', JSON.stringify(taches));
+        }
+
+        function afficherTaches(filtre = 'toutes') {
+            listeTaches.innerHTML = '';
+            taches
+                .filter(tache => {
+                    if (filtre === 'terminees') return tache.terminee;
+                    if (filtre === 'enAttente') return !tache.terminee;
+                    return true;
+                })
+                .forEach((tache, index) => {
+                    const elementTache = document.createElement('li');
+                    elementTache.className = `tache ${tache.terminee ? 'terminee' : ''}`;
+                    elementTache.innerHTML = `
+                        <span>${tache.texte}</span>
+                        <button onclick="supprimerTache(${index})">Supprimer</button>
+                    `;
+                    elementTache.addEventListener('click', () => basculerEtatTache(index));
+                    listeTaches.appendChild(elementTache);
+                });
+        }
+
+        function ajouterTache() {
+            const texteTache = champTache.value.trim();
+            if (!texteTache) {
+                messageErreur.style.display = 'block';
+                return;
+            }
+            messageErreur.style.display = 'none';
+            taches.push({ texte: texteTache, terminee: false });
+            sauvegarderTaches();
+            afficherTaches();
+            champTache.value = '';
+        }
+
+        function supprimerTache(index) {
+            taches.splice(index, 1);
+            sauvegarderTaches();
+            afficherTaches();
+        }
+
+        function basculerEtatTache(index) {
+            taches[index].terminee = !taches[index].terminee;
+            sauvegarderTaches();
+            afficherTaches();
+        }
+
+        boutonAjouterTache.addEventListener('click', ajouterTache);
+
+        boutonAfficherToutes.addEventListener('click', () => afficherTaches('toutes'));
+        boutonAfficherTerminees.addEventListener('click', () => afficherTaches('terminees'));
+        boutonAfficherEnAttente.addEventListener('click', () => afficherTaches('enAttente'));
+
+        // Afficher les tâches au chargement de la page
+        afficherTaches();
+    </script>
+</body>
+</html>
